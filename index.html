@@ -1,0 +1,288 @@
+<meta name="viewport" content="width=820">
+<meta charset="utf-8">
+<title>Circuit Simulator Applet</title>
+<link rel="SHORTCUT ICON" href="favicon.ico">
+
+<body>
+    <hr>
+    <iframe id="circuitFrame" width=800 height=550 src="circuitjs.html?startCircuit=jsinterface.txt"></iframe>
+    <div style="height:auto;width:auto;float:right;">
+      <div id="data"></div>
+      <div id="data2"></div>
+      <div id="data3"></div>
+      <div>
+        <input id="start" type="number" value="0.5" step="0.1">
+        <input id="end" type="number" value="2" step="0.1">
+        <input id="step" type="number" value="0.1" step="0.01">
+      </div>
+      <button onclick="
+        stop=false;
+        let newV=1.5;
+        AllLog=[];
+        const start=Number(document.getElementById('start').value);
+        const end=Number(document.getElementById('end').value);
+        const step=Number(document.getElementById('step').value);
+        getV2(start);
+        function getV2(v=1.5){
+          document.getElementById('data2').innerHTML=v.toString();
+          getV(v,(data)=>{
+            AllLog.push(data);
+            v+=step;
+            if(v<=end&&!stop){
+              getV2(v);
+            }else{
+              alert('Finish!');
+            }
+          });
+        }
+        function getV(v=1.5,callback){
+          startLog=true;
+          Log=[];
+          document.getElementById('Vol').value=v*100;
+          wait();
+          function wait(){
+            document.getElementById('data3').innerHTML=Log.length.toString();
+            if(Log.length>=getN){
+              startLog=false;
+              if(callback){
+                callback(
+                  [
+                    Math.round(v*100)/100,
+                    round(ave(Log.map(i=>{return i[3]}))),
+                    round(ave(Log.map(i=>{return (i[9])}))),
+                    round(ave(Log.map(i=>{return i[8]}))),
+                    round(max(Log.map(i=>{return i[6]}))),
+                    round(ave(Log.map(i=>{return i[6]}))),
+                    round(ave(Log.map(i=>{return (i[4]*i[5])}))),
+                    round(ave(Log.map(i=>{return (i[6]*i[7])}))),
+                  ]
+                );
+              }
+            }else{
+              setTimeout(()=>{
+                wait();
+              },100);
+            }
+          }
+        }
+      ">LOG</button>
+      <button onclick="stop=true;">STOP</button>
+      <button onclick="
+        const textarea=document.createElement('textarea');
+        let text='輸入電壓\t頻率\t佔空比\t效率\t最大輸出電壓\t平均輸出電壓\t平均輸入功率\t平均輸出功率\n';
+        for(let i=0;i<AllLog.length;i++){
+          text+=`${AllLog[i].toString().replaceAll(',','\t')}\n`;
+        }
+        textarea.value=text;
+        textarea.select();
+        textarea.setSelectionRange(0,99999);
+        navigator.clipboard.writeText(textarea.value).then(res => {
+          alert(`Copeid to clipboard!`);
+        });
+      ">COPY</button>
+    </div>
+    <p>
+        Javascript Interface Example
+    <p>
+        You can write javascript code that interfaces with the simulator running in an iframe, as long as the
+        simulator code is hosted on the same website (has the same origin). Your code can get the list of circuit
+        elements and get information about each element (like the voltage of each node, and the current of two-terminal
+        elements),
+        and set the voltage of external voltage nodes.
+    <p>
+        <button onclick="sim.setSimRunning(true)">Start</button>
+        <button onclick="sim.setSimRunning(false)">Stop</button>
+        <button onclick="sim.setMaxTimeStep(sim.getMaxTimeStep()*2)">Double Timestep</button>
+        <button onclick="sim.setMaxTimeStep(sim.getMaxTimeStep()/2)">Halve Timestep</button>
+    <p>
+        Input Voltage:
+        <input id="Vol" type="range" min="0" max="300" value="150" />
+    <div id="info"></div>
+
+    <script>
+
+        // get iframe the simulator is running in. Must have same origin as this file!
+        var iframe = document.getElementById("circuitFrame");
+
+        var sim;
+        var Vol;
+        var elmList = [];
+
+        const nodeTag=['Inductor1','Inductor2','Inductor1-GND','Inductor2-GND','OUT-Vol'];
+
+        var outVol=[0,0];
+        var timer=[0,0];
+        var fra=0;
+        var dut=1;
+        var getValue=[];
+
+        var startLog=false;
+        var Log=[];
+        var AllLog=[];
+        var stop=false;
+        var getN=500;
+
+        function ave(data){
+          let sum=0;
+          for(let i=0;i<data.length;i++){
+            sum+=data[i];
+          }
+          return (sum/data.length);
+        }
+        function max(data){
+          let Max=-Infinity;
+          for(let i=0;i<data.length;i++){
+            if(data[i]>Max){
+              Max=data[i];
+            }
+          }
+          return Max;
+        }
+
+        function round(x) {
+            return Math.round(x * 1000) / 1000;
+        }
+
+        // called when simulator updates its display
+        function didUpdate(sim) {
+            var info = document.getElementById("info");
+            info.innerHTML = "time = " + round(sim.getTime()) + "<br>running = " + sim.isRunning();
+
+            Vol = parseFloat(document.getElementById("Vol").value)/100;
+
+            var rcount = 0;
+
+            // go through list of elements
+            for (const elm of elmList) {
+                if (elm.getType() == "LabeledNodeElm") {
+                    // show voltage of each labeled node
+                    info.innerHTML += "<br>V(" + elm.getLabelName() + ") = " + round(elm.getVoltage(0));
+                    if(nodeTag.indexOf(elm.getLabelName())>=0){
+                      getValue[nodeTag.indexOf(elm.getLabelName())]=elm.getVoltage(0);
+                    }
+                    if(elm.getLabelName()=='OUT-Vol'){
+                      outVol[1]=outVol[0];
+                      outVol[0]=round(elm.getVoltage(0));
+                      if(outVol[1]<0.5&&outVol[0]>=0.5){
+                        if(timer[0]>0){
+                          fra=round(1/(sim.getTime()-timer[0]));
+                        }
+                        timer[0]=sim.getTime();
+                        timer[1]=sim.getTime();
+                      }else if(outVol[1]>=0.5&&outVol[0]<0.5){
+                        if(timer[1]>0){
+                          dut=Math.min(round((sim.getTime()-timer[1])*(fra)),1);
+                        }
+                      }
+                      info.innerHTML += "<br>F = " + fra;
+                    }
+                }else if(elm.getType() == 'ExtVoltageElm'){
+                  getValue[5]=elm.getVoltage(0);
+                  getValue[6]=elm.getCurrent(0);
+                }else if(elm.getType() == 'LEDElm'){
+                  getValue[7]=elm.getVoltage(0);
+                  getValue[8]=elm.getCurrent(0);
+                }
+            }
+            getValue[0]=round(getValue[0]-getValue[1]);
+            getValue[1]=round(getValue[2]-getValue[3]);
+            getValue[2]=round(getValue[4]);
+            getValue[3]=fra;
+            getValue[4]=getValue[5];
+            getValue[5]=getValue[6];
+            getValue[6]=getValue[7];
+            getValue[7]=getValue[8];
+            getValue[8]=(Math.floor(((getValue[6]*getValue[7])/(getValue[4]*getValue[5]))*1000)/10);
+            getValue[9]=dut;
+            getValue=getValue.slice(0,10);
+            if(startLog){
+              Log.push(getValue);
+            }
+            document.getElementById("data").innerHTML=
+              `
+                <table style="width:250px;">
+                  <tr>
+                    <td style="width:100px;">輸入電壓:</td>
+                    <td>${round(getValue[4])}</td>
+                  </tr>
+                  <tr>
+                    <td>輸入電流:</td>
+                    <td>${round(getValue[5])}</td>
+                  </tr>
+                  <tr>
+                    <td>輸入功率:</td>
+                    <td>${round(getValue[4]*getValue[5])}</td>
+                  </tr>
+                  <tr>
+                    <td>輸出電壓:</td>
+                    <td>${round(getValue[6])}</td>
+                  </tr>
+                  <tr>
+                    <td>輸出電流:</td>
+                    <td>${round(getValue[7])}</td>
+                  </tr>
+                  <tr>
+                    <td>輸出功率:</td>
+                    <td>${round(getValue[6]*getValue[7])}</td>
+                  </tr>
+                  <tr>
+                    <td>效率:</td>
+                    <td>${getValue[8].toString().padStart(4,' ')}%</td>
+                  </tr>
+                  <tr>
+                    <td>電感1電壓:</td>
+                    <td>${getValue[0]}</td>
+                  </tr>
+                  <tr>
+                    <td>電感2電壓:</td>
+                    <td>${getValue[1]}</td>
+                  </tr>
+                  <tr>
+                    <td>頻率:</td>
+                    <td>${getValue[3].toString().padEnd(7,' ')}</td>
+                  </tr>
+                  <tr>
+                    <td>佔空比:</td>
+                    <td>${getValue[9].toString().padEnd(7,' ')}</td>
+                  </tr>
+                </table>
+              `;
+        }
+
+        // called when simulator analyzes a circuit (when a circuit is loaded or edited)
+        function didAnalyze(sim) {
+            console.log("analyzed circuit");
+
+            // get the list of elements
+            elmList = sim.getElements();
+
+            // log some info about each one
+            for (const elm of elmList) {
+                console.log("elm " + elm.getType() + ", " + elm.getPostCount() + " posts");
+                console.log("elm info: " + elm.getInfo());
+            }
+        }
+
+        // called every timestep
+        function didStep(sim) {
+            var t = sim.getTime();
+
+            // set voltage of external voltage "extsin"
+            sim.setExtVoltage("Voltage", Vol);
+        }
+
+        // callback called when simulation is done initializing
+        function simLoaded() {
+            // get simulator object
+            sim = iframe.contentWindow.CircuitJS1;
+
+            // set up callbacks on update and timestep
+            sim.onupdate = didUpdate;
+            sim.ontimestep = didStep;
+            sim.onanalyze = didAnalyze;
+        }
+
+        // set up callback
+        iframe.contentWindow.oncircuitjsloaded = simLoaded;
+
+    </script>
