@@ -78,7 +78,7 @@
           if(getOne>=5){
             getOne=0;
             if(callback){
-              callback(Log.map(i=>{return [i[2],i[4]]}),);
+              callback(Log.map(i=>{return [i[2],i[4]]}));
             }
           }else{
             setTimeout(()=>{
@@ -191,17 +191,21 @@
                         }
                         timer[0]=sim.getTime();
                         timer[1]=sim.getTime();
-                        if(getOne===1||getOne===3){
-                          startLog=true;
+                        if(1<=getOne&&getOne<=3){
                           getOne++;
+                          if(getOne===1){
+                            startLog=true;
+                          }
                         }
                       }else if(outVol[1]>=0.5&&outVol[0]<0.5){
                         if(timer[1]>0){
                           dut=Math.min(round((sim.getTime()-timer[1])*(fra)),1);
                         }
-                        if(getOne===2||getOne===4){
-                          startLog=false;
+                        if(2<=getOne&getOne<=4){
                           getOne++;
+                          if(getOne===4){
+                            startLog=false;
+                          }
                         }
                       }
                       info.innerHTML += "<br>F = " + fra;
