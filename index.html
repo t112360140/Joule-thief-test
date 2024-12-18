@@ -66,6 +66,32 @@
           }
         }
       ">LOG</button>
+      <button onclick="
+        Log=[];
+        getOne=1;
+        wait((data)=>{
+          AllLog=data;
+          alert('Finish!');
+        });
+        function wait(callback){
+          document.getElementById('data3').innerHTML=Log.length.toString();
+          if(getOne>=5){
+            getOne=0;
+            if(callback){
+              callback(
+                [
+                  Log.map(i=>{return i[2]}),
+                  Log.map(i=>{return i[4]}),
+                ]
+              );
+            }
+          }else{
+            setTimeout(()=>{
+              wait(callback);
+            },100);
+          }
+        }
+      ">LOG2</button>
       <button onclick="stop=true;">STOP</button>
       <button onclick="
         const textarea=document.createElement('textarea');
@@ -117,6 +143,7 @@
         var getValue=[];
 
         var startLog=false;
+        var getOne=0;
         var Log=[];
         var AllLog=[];
         var stop=false;
@@ -169,9 +196,17 @@
                         }
                         timer[0]=sim.getTime();
                         timer[1]=sim.getTime();
+                        if(getOne===1||getOne===3){
+                          startLog=true;
+                          getOne++;
+                        }
                       }else if(outVol[1]>=0.5&&outVol[0]<0.5){
                         if(timer[1]>0){
                           dut=Math.min(round((sim.getTime()-timer[1])*(fra)),1);
+                        }
+                        if(getOne===2||getOne===4){
+                          startLog=false;
+                          getOne++;
                         }
                       }
                       info.innerHTML += "<br>F = " + fra;
