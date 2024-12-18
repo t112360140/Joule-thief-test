@@ -78,12 +78,7 @@
           if(getOne>=5){
             getOne=0;
             if(callback){
-              callback(
-                [
-                  Log.map(i=>{return i[2]}),
-                  Log.map(i=>{return i[4]}),
-                ]
-              );
+              callback(Log.map(i=>{return [i[2],i[4]]}),);
             }
           }else{
             setTimeout(()=>{
