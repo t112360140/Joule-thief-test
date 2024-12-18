@@ -75,8 +75,9 @@
         });
         function wait(callback){
           document.getElementById('data3').innerHTML=Log.length.toString();
-          if(getOne>=4){
+          if(getOne>=8){
             getOne=0;
+            startLog=false;
             if(callback){
               callback(Log.map(i=>{return [i[10],i[2],i[0]]}));
             }
@@ -183,9 +184,6 @@
                         timer[0]=sim.getTime();
                         timer[1]=sim.getTime();
                         if(2<=getOne){
-                          if(getOne>=8){
-                            startLog=false;
-                          }
                           getOne++;
                         }
                       }else if(outVol[1]>=0.5&&outVol[0]<0.5){
