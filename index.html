@@ -217,6 +217,7 @@
             }
             getValue[0]=round(getValue[0]-getValue[1]);
             getValue[1]=round(getValue[2]-getValue[3]);
+            getValue[10]=getValue[2];
             getValue[2]=round(getValue[4]);
             getValue[3]=fra;
             getValue[4]=getValue[5];
@@ -225,7 +226,6 @@
             getValue[7]=getValue[8];
             getValue[8]=(Math.floor(((getValue[6]*getValue[7])/(getValue[4]*getValue[5]))*1000)/10);
             getValue[9]=dut;
-            getValue[10]=getValue[2];
             getValue=getValue.slice(0,10);
             if(startLog){
               Log.push(getValue);
