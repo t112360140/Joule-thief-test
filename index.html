@@ -192,20 +192,20 @@
                         timer[0]=sim.getTime();
                         timer[1]=sim.getTime();
                         if(1<=getOne&&getOne<=3){
-                          getOne++;
                           if(getOne===1){
                             startLog=true;
                           }
+                          getOne++;
                         }
                       }else if(outVol[1]>=0.5&&outVol[0]<0.5){
                         if(timer[1]>0){
                           dut=Math.min(round((sim.getTime()-timer[1])*(fra)),1);
                         }
                         if(2<=getOne&getOne<=4){
-                          getOne++;
                           if(getOne===4){
                             startLog=false;
                           }
+                          getOne++;
                         }
                       }
                       info.innerHTML += "<br>F = " + fra;
