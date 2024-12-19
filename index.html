@@ -91,7 +91,7 @@
       <button onclick="stop=true;">STOP</button>
       <button onclick="
         const textarea=document.createElement('textarea');
-        let text='輸入電壓\t頻率\t佔空比\t效率\t最大輸出電壓\t平均輸出電壓\t平均輸入功率\t平均輸出功率\n';
+        let text='';//'輸入電壓\t頻率\t佔空比\t效率\t最大輸出電壓\t平均輸出電壓\t平均輸入功率\t平均輸出功率\n';
         for(let i=0;i<AllLog.length;i++){
           text+=`${AllLog[i].toString().replaceAll(',','\t')}\n`;
         }
